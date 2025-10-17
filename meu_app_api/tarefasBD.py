@@ -75,6 +75,63 @@ def add_tarefa():
         return jsonify({"erro": f"Um erro inesperado ocorreu: {e}"}), 500
 
 
+@app.route('/tarefas/<int:id>', methods=['PUT'])
+def update_tarefa(id):
+    dados_tarefa = request.json
+    concluida = dados_tarefa.get('concluida')
+
+    if concluida is None or not isinstance(concluida, bool):
+        return jsonify({"erro": "O campo 'concluida' é obrigatório e deve ser um booleano (true/false)"}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # Executa o UPDATE, focando apenas no campo 'concluida'
+        cur.execute('UPDATE tarefas SET concluida = %s WHERE id = %s RETURNING *;',
+                    (concluida, id))
+
+        tarefa_atualizada = cur.fetchone()
+
+        # Se a tarefa não for encontrada, fetchone() retornará None
+        if tarefa_atualizada is None:
+            return jsonify({"erro": "Tarefa não encontrada"}), 404
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify(tarefa_atualizada)
+
+    except Exception as e:
+        return jsonify({"erro": f"Um erro inesperado ocorreu: {e}"}), 500
+
+
+@app.route('/tarefas/<int:id>', methods=['DELETE'])
+def delete_tarefa(id):
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        cur.execute('DELETE FROM tarefas WHERE id = %s RETURNING *;', (id,))
+
+        tarefa_deletada = cur.fetchone()
+
+        # Se a tarefa não for encontrada, fetchone() retornará None
+        if tarefa_deletada is None:
+            return jsonify({"erro": "Tarefa não encontrada"}), 404
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": 'Tarefa removida com sucesso!'}), 200
+
+    except Exception as e:
+        return jsonify({"erro": f"Um erro inesperado ocorreu: {e}"}), 500
+
+
 if __name__ == '__main__':
     # Usamos os.getenv para pegar a porta do .env ou usar 5000 como padrão
     api_port = 5000
