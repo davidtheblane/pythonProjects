@@ -1,0 +1,14 @@
+# Ignorar o arquivo de variáveis de ambiente
+.env
+*/.env
+
+# Ignorar a pasta do ambiente virtual do Python
+venv/
+*/venv/
+
+# Outros padrões comuns do Python
+__pycache__/
+*/__pycache__
+
+*.pyc
+*/.pyc
